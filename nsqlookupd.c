@@ -1,4 +1,4 @@
-#include <json-c/json.h>
+#include <jansson.h>
 #include "nsq.h"
 #include "http.h"
 
@@ -11,8 +11,7 @@
 void nsq_lookupd_request_cb(struct HttpRequest *req, struct HttpResponse *resp, void *arg)
 {
     struct NSQReader *rdr = (struct NSQReader *)arg;
-    struct json_object *jsobj, *data, *producers, *producer, *broadcast_address_obj, *tcp_port_obj;
-    struct json_tokener *jstok;
+    json_t *jsobj, *data, *producers, *producer, *broadcast_address_obj, *tcp_port_obj;
     struct NSQDConnection *conn;
     const char *broadcast_address;
     int i, found, tcp_port;
@@ -26,37 +25,33 @@ void nsq_lookupd_request_cb(struct HttpRequest *req, struct HttpResponse *resp, 
         return;
     }
 
-    jstok = json_tokener_new();
-    jsobj = json_tokener_parse_ex(jstok, resp->data->data, (int)BUFFER_HAS_DATA(resp->data));
+    jsobj = json_loadb(resp->data->data, (size_t)BUFFER_HAS_DATA(resp->data), 0, NULL);
     if (!jsobj) {
         _DEBUG("%s: error parsing JSON\n", __FUNCTION__);
-        json_tokener_free(jstok);
         return;
     }
 
-    data = json_object_object_get(jsobj, "data");
-    if (!jsobj) {
+    data = json_object_get(jsobj, "data");
+    if (!data) {
         _DEBUG("%s: error getting 'data' key\n", __FUNCTION__);
-        json_object_put(jsobj);
-        json_tokener_free(jstok);
+        json_decref(jsobj);
         return;
     }
-    producers = json_object_object_get(data, "producers");
+    producers = json_object_get(data, "producers");
     if (!producers) {
         _DEBUG("%s: error getting 'producers' key\n", __FUNCTION__);
-        json_object_put(jsobj);
-        json_tokener_free(jstok);
+        json_decref(jsobj);
         return;
     }
 
-    _DEBUG("%s: num producers %d\n", __FUNCTION__, json_object_array_length(producers));
-    for (i = 0; i < json_object_array_length(producers); i++) {
-        producer = json_object_array_get_idx(producers, i);
-        broadcast_address_obj = json_object_object_get(producer, "broadcast_address");
-        tcp_port_obj = json_object_object_get(producer, "tcp_port");
+    _DEBUG("%s: num producers %ld\n", __FUNCTION__, json_array_size(producers));
+    for (i = 0; i < json_array_size(producers); i++) {
+        producer = json_array_get(producers, i);
+        broadcast_address_obj = json_object_get(producer, "broadcast_address");
+        tcp_port_obj = json_object_get(producer, "tcp_port");
 
-        broadcast_address = json_object_get_string(broadcast_address_obj);
-        tcp_port = json_object_get_int(tcp_port_obj);
+        broadcast_address = json_string_value(broadcast_address_obj);
+        tcp_port = json_integer_value(tcp_port_obj);
 
         _DEBUG("%s: broadcast_address %s, port %d\n", __FUNCTION__, broadcast_address, tcp_port);
 
@@ -74,8 +69,7 @@ void nsq_lookupd_request_cb(struct HttpRequest *req, struct HttpResponse *resp, 
         }
     }
 
-    json_object_put(jsobj);
-    json_tokener_free(jstok);
+    json_decref(jsobj);
 
     free_http_response(resp);
     free_http_request(req);

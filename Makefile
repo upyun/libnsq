@@ -4,7 +4,7 @@ LIBDIR=${PREFIX}/lib
 INCDIR=${PREFIX}/include
 
 CFLAGS+=-g -Wall -O2 -DDEBUG -fPIC
-LIBS=-lev -levbuffsock -lcurl -ljson-c
+LIBS=-lev -levbuffsock -lcurl -ljansson
 AR=ar
 AR_FLAGS=rc
 RANLIB=ranlib
