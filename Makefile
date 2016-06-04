@@ -4,10 +4,17 @@ LIBDIR=${PREFIX}/lib
 INCDIR=${PREFIX}/include
 
 CFLAGS+=-g -Wall -O2 -DDEBUG -fPIC
-LIBS=-lev -levbuffsock -lcurl -ljansson
+LIBS=-lev -levbuffsock -lcurl
 AR=ar
 AR_FLAGS=rc
 RANLIB=ranlib
+
+ifdef WITH_JANSSON
+LIBS+=-ljansson
+CFLAGS+=-DWITH_JANSSON
+else
+LIBS+=-ljson-c
+endif
 
 all: libnsq test
 
