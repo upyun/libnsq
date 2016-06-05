@@ -1,75 +1,34 @@
-#ifndef json_h
-#define json_h
+#ifndef __json_h
+#define __json_h
 
 #ifdef WITH_JANSSON
+
 #include <jansson.h>
 
-#define JSON_OBJECT json_t
-#define JSON_TOKENER_DEF(t)
-
-#define JSON_LOADB(jsobj, jstok, buf, buflen, flags) {     \
-    jsobj = json_loadb(buf, (size_t)buflen, flags, NULL);  \
-}
-
-#define JSON_TOKENER_NEW(t)
-#define JSON_TOKENER_FREE(t)
-
-#define JSON_DECREF(jsobj) \
-    json_decref(jsobj)
-
-#define JSON_ARRAY_LENTH(jsobj) \
-    json_array_size(jsobj)
-
-#define JSON_ARRAY_GET(jsobj, i) \
-    json_array_get(jsobj, i)
-
-#define JSON_OBJECT_GET(jsobj, key, value) { \
-    value = json_object_get(jsobj, key);     \
-}
-
-#define JSON_STRING_VALUE(jsobj) \
-    json_string_value(jsobj)
-
-#define JSON_INT_VALUE(jsobj) \
-    json_integer_value(jsobj)
+typedef json_t      nsq_json_t;
+typedef size_t      nsq_json_size_t;
+typedef json_int_t  nsq_json_int_t;
+typedef void        nsq_json_tokener_t;
 
 #else
 
 #include <json-c/json.h>
 
-#define JSON_OBJECT struct json_object
-#define JSON_TOKENER_DEF(t) struct json_tokener t
-
-#define JSON_LOADB(jsobj, jstok, buf, buflen, flags) {      \
-    jstok = json_tokener_new();                             \
-    jsobj = json_tokener_parse_ex(jstok, buf, (int)buflen); \
-}
-
-#define JSON_TOKENER_NEW(t) { \
-    t = json_tokener_new();   \
-}
-#define JSON_TOKENER_FREE(t) \
-    json_tokener_free(t)
-
-#define JSON_DECREF(jsobj) \
-    json_object_put(jsobj)
-
-#define JSON_ARRAY_LENTH(jsobj) \
-    json_object_array_length(jsobj)
-
-#define JSON_ARRAY_GET(jsobj, i) \
-    json_object_array_get_idx(jsobj, i)
-
-#define JSON_OBJECT_GET(jsobj, key, value) {       \
-    json_object_object_get_ex(jsobj, key, &value); \
-}
-
-#define JSON_STRING_VALUE(jsobj) \
-    json_object_get_string(jsobj)
-
-#define JSON_INT_VALUE(jsobj) \
-    json_object_get_int(jsobj)
+typedef struct json_object     nsq_json_t;
+typedef int                    nsq_json_size_t;
+typedef int32_t                nsq_json_int_t;
+typedef struct json_tokener    nsq_json_tokener_t;
 
 #endif
 
-#endif /* ifndef json_h */
+nsq_json_tokener_t *nsq_json_tokener_new();
+void nsq_json_tokener_free(nsq_json_tokener_t *jstok);
+int nsq_json_decref(nsq_json_t *jsobj);
+nsq_json_t *nsq_json_loadb(const char *buf, const nsq_json_size_t buflen, const size_t flags, nsq_json_tokener_t *jstok);
+nsq_json_size_t nsq_json_array_length(const nsq_json_t *array);
+nsq_json_t *nsq_json_array_get(const nsq_json_t *array, const nsq_json_size_t idx);
+int nsq_json_object_get(const nsq_json_t *jsobj, const char *key, nsq_json_t **value);
+const char *nsq_json_string_value(nsq_json_t *jsojb);
+nsq_json_int_t nsq_json_int_value(const nsq_json_t *jsobj);
+
+#endif /* ifndef __json_h */
