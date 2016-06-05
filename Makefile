@@ -9,7 +9,7 @@ AR=ar
 AR_FLAGS=rc
 RANLIB=ranlib
 
-ifeq (1, $(findstring 1, $(WITH_JANSSON)))
+ifeq (1, $(WITH_JANSSON))
 LIBS+=-ljansson
 CFLAGS+=-DWITH_JANSSON
 else
